@@ -70,7 +70,12 @@ class KarelPupper:
         - Call self.stop() to halt movement
         - Log the action: self.node.get_logger().info('Stopped tracking')
         """
-        pass  # TODO: Implement end_tracking
+        self.track_enabled = True
+        self.tracking_object = None
+        self.tracking_control_publisher.publish({'data': 'stop'})
+        rclpy.spin_once(self.node, timeout_sec=0.1)
+        self.stop()
+        self.node.get_logger().info(f"Stopped tracking")
 
     def move(self, linear_x, linear_y, angular_z):
         move_cmd = Twist()
