@@ -49,10 +49,10 @@ class KarelPupper:
         - Call rclpy.spin_once(self.node, timeout_sec=0.1) to ensure message is sent
         - Log the action: self.node.get_logger().info(f'Started tracking: {obj}')
         """
-        self.track_enabled = True
+        self.tracking_enabled = True
         self.tracking_object = obj
         msg = String()
-        msg.data = f"start: {obj}"
+        msg.data = f"start:{obj}"
         self.tracking_control_publisher.publish(msg)
         rclpy.spin_once(self.node, timeout_sec=0.1)
         self.node.get_logger().info(f"Started tracking: {obj}")
@@ -72,7 +72,7 @@ class KarelPupper:
         - Call self.stop() to halt movement
         - Log the action: self.node.get_logger().info('Stopped tracking')
         """
-        self.track_enabled = True
+        self.tracking_enabled = False
         self.tracking_object = None
         msg = String()
         msg.data = 'stop'
