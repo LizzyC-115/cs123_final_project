@@ -7,6 +7,7 @@ from std_msgs.msg import String
 import numpy as np
 import sys
 import os
+import time
 
 # Add pupper_llm to path
 sys.path.append(os.path.dirname(__file__))
@@ -56,9 +57,9 @@ class StateMachineNode(Node):
         self.tracking_enabled = False
 
         # TODO: Initialize member variables to track detection state
-        self.last_detection_pos = pass # TODO: Store the last detection in the image so that we choose the closest detection in this frame
-        self.target_pos = pass  # TODO: Store the target's normalized position in the image (range: -0.5 to 0.5, where 0 is center)
-        self.last_detection_time = pass  # TODO: Store the timestamp of the most recent detection for timeout checking
+        self.last_detection_pos = IMAGE_WIDTH / 2 # TODO: Store the last detection in the image so that we choose the closest detection in this frame
+        self.target_pos = 0  # TODO: Store the target's normalized position in the image (range: -0.5 to 0.5, where 0 is center)
+        self.last_detection_time = 0  # TODO: Store the timestamp of the most recent detection for timeout checking
         
         self.get_logger().info('State Machine Node initialized in IDLE state.')
         self.get_logger().info('Use begin_tracking(object) to enable tracking.')
@@ -95,7 +96,25 @@ class StateMachineNode(Node):
         - Store the normalized position in self.target_pos
         - Update self.last_detection_time with the current timestamp
         """
-        pass  # TODO: Implement detection callback
+        detections = msg.detections
+    
+        # Check for detections
+        if not detections:
+            self.get_logger.info('There are no detections in msg.')
+            return
+        
+        # Find closest position w/ normalized position
+        last_det = self.last_detection_pos
+        closest_pos = float('inf')
+        for det in detections:
+            x = det.bbox.size_x
+            norm_x = abs((x / (IMAGE_WIDTH - 0.5)) - last_det)
+            smallest_normalized_pos = min(smallest_normalized_pos, norm_x)
+
+        # Update member variables
+        self.last_detection_pos = closest_pos
+        self.last_detection_time = time.time()
+        
 
     def timer_callback(self):
         """
