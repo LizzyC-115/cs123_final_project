@@ -134,7 +134,7 @@ class StateMachineNode(Node):
         # - Convert the time difference from nanoseconds to seconds
         # - If time_since_detection > TIMEOUT, transition to State.SEARCH
         # - Otherwise, transition to State.TRACK
-        time_since_detection = (current_time - self.last_detection_time) * 1e-9
+        time_since_detection = current_time.sec - self.last_detection_time
         
         if time_since_detection > TIMEOUT:
             self.state = State.SEARCH
