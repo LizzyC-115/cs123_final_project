@@ -108,15 +108,19 @@ class StateMachineNode(Node):
             # This allows Karel commands to control the robot
             self.state = State.IDLE
             return
+        current_time = self.get_clock().now().to_msg()
         
+        
+
         # TODO: Implement state transition logic based on detection timeout
         # - Calculate time_since_detection by subtracting self.last_detection_time from current time
         # - Convert the time difference from nanoseconds to seconds
         # - If time_since_detection > TIMEOUT, transition to State.SEARCH
         # - Otherwise, transition to State.TRACK
-        time_since_detection = pass  # TODO: Calculate time since last detection
+        time_since_detection = (current_time.sec - self.last_detection_time.sec) +
+        (current_time.nanosec - self.last_detection_time.nanosec) * 1e-9
         
-        if False:  # TODO: Replace with condition checking
+        if time_since_detection > TIMEOUT:
             self.state = State.SEARCH
         else:
             self.state = State.TRACK
@@ -135,14 +139,16 @@ class StateMachineNode(Node):
             # - Set yaw_command to rotate in the direction where the target was last seen
             # - Use SEARCH_YAW_VEL and rotate opposite to the sign of self.target_pos
             # - Keep forward_vel_command = 0.0 (don't move forward while searching)
-            pass  # TODO: Implement SEARCH state behavior
+            yaw_command = -SEARCH_YAW_VEL if self.target_pos > 0 else SEARCH_YAW_VEL
+            forward_vel_command = 0.0
         
         elif self.state == State.TRACK:
             # TODO: Implement tracking behavior using proportional control
             # - Set yaw_command using a proportional controller: -self.target_pos * KP
             # - This will turn the robot to center the target in the camera view
             # - Set forward_vel_command to TRACK_FORWARD_VEL to move toward the target
-            pass  # TODO: Implement TRACK state behavior
+            yaw_command = -self.target_pos * KP
+            forward_vel_command = TRACK_FORWARD_VEL
 
         cmd = Twist()
         cmd.angular.z = yaw_command
