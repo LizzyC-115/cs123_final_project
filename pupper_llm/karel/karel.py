@@ -51,7 +51,9 @@ class KarelPupper:
         """
         self.track_enabled = True
         self.tracking_object = obj
-        self.tracking_control_publisher.publish({'data': f"start:{obj}"})
+        msg = String()
+        msg.data = f"start: {obj}"
+        self.tracking_control_publisher.publish(msg)
         rclpy.spin_once(self.node, timeout_sec=0.1)
         self.node.get_logger().info(f"Started tracking: {obj}")
 
@@ -72,7 +74,9 @@ class KarelPupper:
         """
         self.track_enabled = True
         self.tracking_object = None
-        self.tracking_control_publisher.publish({'data': 'stop'})
+        msg = String()
+        msg.data = 'stop'
+        self.tracking_control_publisher.publish(msg)
         rclpy.spin_once(self.node, timeout_sec=0.1)
         self.stop()
         self.node.get_logger().info(f"Stopped tracking")
