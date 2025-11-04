@@ -109,7 +109,7 @@ class StateMachineNode(Node):
         for det in detections:
             x = det.bbox.size_x
             norm_x = abs((x / (IMAGE_WIDTH - 0.5)) - last_det)
-            smallest_normalized_pos = min(smallest_normalized_pos, norm_x)
+            closest_pos = min(closest_pos, norm_x)
 
         # Update member variables
         self.last_detection_pos = closest_pos
