@@ -321,9 +321,6 @@ class KarelPupper:
         # TODO: Paste your awesome dance choreography from Lab 6!
         # Use combinations of self.wiggle(), self.turn_left(), self.turn_right(), self.bob(), and self.stop().
         # Be creative and choreograph the most exciting dance possible!
-<<<<<<< Updated upstream
-        pass
-=======
         self.wiggle()
         self.move_left()
         self.move_right()
@@ -331,7 +328,6 @@ class KarelPupper:
         self.move_forward()
         self.move_backward()
         self.wiggle()
->>>>>>> Stashed changes
 
     def stop(self):
         self.node.get_logger().info("Stopping...")
