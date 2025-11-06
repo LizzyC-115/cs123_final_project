@@ -15,7 +15,7 @@ sys.path.append(os.path.dirname(__file__))
 IMAGE_WIDTH = 700
 
 # TODO: Define constants for the state machine behavior
-TIMEOUT = 3  # TODO: Set the timeout threshold (in seconds) for determining when a detection is too old
+TIMEOUT = 1  # TODO: Set the timeout threshold (in seconds) for determining when a detection is too old
 SEARCH_YAW_VEL = 5  # TODO: Set the angular velocity (rad/s) for rotating while searching for the target
 TRACK_FORWARD_VEL = 0.1  # TODO: Set the forward velocity (m/s) while tracking the target
 KP = 1  # TODO: Set the proportional gain for the proportional controller that centers the target
@@ -114,7 +114,7 @@ class StateMachineNode(Node):
 
         # Update member variables
         self.last_detection_pos = closest_pos
-        self.last_detection_time = time.time()
+        self.last_detection_time = self.get_clock().now().to_msg().sec
         
 
     def timer_callback(self):
