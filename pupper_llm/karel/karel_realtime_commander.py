@@ -215,7 +215,7 @@ class KarelRealtimeCommanderNode(Node):
                 await asyncio.sleep(0.5)
 
             elif command in ["start_tracking", "track"]:
-                self.pupper.begin_tracking(command[1])
+                self.pupper.begin_tracking(command.split(" ")[1])
                 await asyncio.sleep(0.5)
             
             elif command in ["stop_tracking"]:
