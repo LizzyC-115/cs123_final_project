@@ -141,7 +141,7 @@ class StateMachineNode(Node):
         # - Convert the time difference from nanoseconds to seconds
         # - If time_since_detection > TIMEOUT, transition to State.SEARCH
         # - Otherwise, transition to State.TRACK
-        time_since_detection = current_time.sec - self.last_detection_time
+        time_since_detection = float('inf') if self.last_detection_time == 0.0 else (current_time_sec - self.last_detection_time)
         
         if time_since_detection > TIMEOUT:
             self.state = State.SEARCH
@@ -177,6 +177,7 @@ class StateMachineNode(Node):
         cmd.angular.z = yaw_command
         cmd.linear.x = forward_vel_command
         self.command_publisher.publish(cmd)
+        self.get_logger().debug(f"cmd: yaw={yaw_command:.3f} lin_x={forward_vel_command:.3f} mode={self.state.name}")
 
 def main():
     rclpy.init()
