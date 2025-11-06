@@ -79,7 +79,12 @@ class KarelRealtimeCommanderNode(Node):
         #     ["move", "turn_left", "bark"]
 
         # Your code here:
-        pass
+        response_lines = response.split("\n")
+        logger.info(f"🔍 Response lines: {response_lines}")
+        for line in response_lines:
+            if line.strip():
+                commands = self.extract_commands_from_line(line.strip())
+                all_commands.extend(commands)
 
         
         if all_commands:
@@ -129,7 +134,34 @@ class KarelRealtimeCommanderNode(Node):
             line = "<move, turn_left>"
             returns ['move', 'turn_left']
         """
-        pass
+        logger.info(f"🔍 Behavior line: {line}")
+
+        if 'move_forwards' in line:
+            return ['move_fowards']
+        elif 'move_backwards' in line:
+            return ['move_backwards']
+        elif 'turn_right' in line:
+            return ['turn_right']
+        elif 'turn_left' in line:
+            return ['turn_left']
+        elif 'wiggle' in line:
+            return ['wiggle']
+        elif 'bob' in line:
+            return ['bob']
+        elif 'sit' in line:
+            return ['sit']
+        elif 'stand' in line:
+            return ['stand']
+        elif 'stop' in line:
+            return ['stop']
+        elif 'start_tracking' in line:
+            return ['start_tracking', line.split('start_tracking')[1].strip()]
+        elif 'stop_tracking' in line:
+            return ['stop_tracking']
+        elif 'describe_scene' in line:
+            return ['describe_scene']
+        
+        return []
     
     async def execute_command(self, command: str) -> bool:
         """Execute a single robot command."""
@@ -147,9 +179,58 @@ class KarelRealtimeCommanderNode(Node):
             # TODO: Paste your Lab 6 command mapping implementation below
             # Implement the mapping from canonical command names (e.g., "move", "turn_left", "bark", etc.) to the appropriate KarelPupper action and its timing.
             # One complete mapping is shown as an example!
-            if command in ["move", "go", "forward"]:
+            
+            # TODO: Implement the mapping from canonical command names (e.g., "move", "turn_left", "bark", etc.) to the appropriate KarelPupper action and its timing.
+            # One complete mapping is shown as an example!
+            if command in ["move_forwards", "go", "forward", "forwards"]:
                 self.pupper.move_forward()
                 await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
+            
+            elif command in ["turn_left", "left"]:
+                self.pupper.turn_left()
+                await asyncio.sleep(0.5)
+            
+            elif command in ["turn_right", "right"]:
+                self.pupper.turn_right()
+                await asyncio.sleep(0.5)
+            
+            elif command in ["bark"]:
+                self.pupper.bark()
+                await asyncio.sleep(0.5)
+            
+            elif command in ["wiggle"]:
+                self.pupper.wiggle()
+                await asyncio.sleep(5.5)
+            
+            elif command in ["bob"]:
+                self.pupper.bob()
+                await asyncio.sleep(5.5)
+            
+            elif command in ["dance"]:
+                self.pupper.dance()
+                await asyncio.sleep(12.0)
+            
+            elif command in ["stop"]:
+                self.pupper.stop()
+                await asyncio.sleep(0.5)
+
+            elif command in ["start_tracking", "track"]:
+                self.pupper.begin_tracking(command[1])
+                await asyncio.sleep(0.5)
+            
+            elif command in ["stop_tracking"]:
+                self.pupper.end_tracking()
+                await asyncio.sleep(0.5)
+            else:
+                logger.warning(f"⚠️  Unknown command: {command}")
+                return False
+            
+            logger.info(f"✅ Done")
+            return True
+            
+            
+        
+            # Hint: Use await asyncio.sleep(seconds) to pace each action!
             # TODO: Add additional elifs for the other actions that KarelPupper supports,
             #       calling the correct pupper method, and using an appropriate sleep time after each command.
             # For example:
@@ -158,14 +239,6 @@ class KarelRealtimeCommanderNode(Node):
             #   - For "dance" actions, the full dance is ~12.0 seconds; use await asyncio.sleep(12.0)
             #   - For most normal moves and turns, use 0.5 seconds.
             # See the KarelPupper API for supported commands and their method names.
-                pass
-            
-            else:
-                logger.warning(f"⚠️  Unknown command: {command}")
-                return False
-            
-            logger.info(f"✅ Done")
-            return True
             
         except Exception as e:
             logger.error(f"❌ Error: {e}")
