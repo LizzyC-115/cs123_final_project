@@ -101,20 +101,25 @@ class StateMachineNode(Node):
     
         # Check for detections
         if not detections:
-            self.get_logger.info('There are no detections in msg.')
+            self.get_logger().info('There are no detections in msg.')
             return
         
-        # Find closest position w/ normalized position
-        last_det = self.last_detection_pos
-        closest_pos = float('inf')
+        # Compute normalized x center for each detection: (center_x / IMAGE_WIDTH) - 0.5
+        # Choose detection closest to last seen position (or to center if first time)
+        best_norm_x = None
+        best_distance = float('inf')
         for det in detections:
-            x = det.bbox.size_x
-            norm_x = abs((x / (IMAGE_WIDTH - 0.5)) - last_det)
-            closest_pos = min(closest_pos, norm_x)
+            center_x = float(det.bbox.center.position.x)
+            norm_x = (center_x / float(IMAGE_WIDTH)) - 0.5
+            distance = abs(norm_x - self.last_detection_pos) if self.last_detection_time > 0.0 else abs(norm_x)
+            if distance < best_distance:
+                best_distance = distance
+                best_norm_x = norm_x
 
-        # Update member variables
-        self.last_detection_pos = closest_pos
-        self.last_detection_time = self.get_clock().now().to_msg().sec
+        if best_norm_x is not None:
+            self.target_pos = best_norm_x
+            self.last_detection_pos = best_norm_x
+            self.last_detection_time = time.time()
         
 
     def timer_callback(self):
@@ -128,7 +133,8 @@ class StateMachineNode(Node):
             # This allows Karel commands to control the robot
             self.state = State.IDLE
             return
-        current_time = self.get_clock().now().to_msg()
+        # Use wall-clock time consistently with detection timestamps
+        current_time_sec = time.time()
 
         # TODO: Implement state transition logic based on detection timeout
         # - Calculate time_since_detection by subtracting self.last_detection_time from current time
