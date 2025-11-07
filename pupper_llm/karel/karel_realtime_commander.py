@@ -85,8 +85,8 @@ class KarelRealtimeCommanderNode(Node):
             if line.strip():
                 commands = self.extract_commands_from_line(line.strip())
                 all_commands.extend(commands)
+                print(all_commands)
 
-        
         if all_commands:
             logger.info(f"📋 Commands (in order): {all_commands}")
             # Queue commands with timestamp in sequential order
@@ -190,8 +190,16 @@ class KarelRealtimeCommanderNode(Node):
                 self.pupper.end_tracking()
                 await asyncio.sleep(0.5)
 
-            elif command in ["move_forwards", "go", "forward", "forwards"]:
+            elif command in ["move_forwards", "go", "forward", "forwards", "move_forward"]:
                 self.pupper.move_forward()
+                await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
+            
+            elif command in ["move_left"]:
+                self.pupper.move_left()
+                await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
+            
+            elif command in ["move_right"]:
+                self.pupper.move_right()
                 await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
             
             elif command in ["turn_left", "left"]:
@@ -229,8 +237,6 @@ class KarelRealtimeCommanderNode(Node):
             logger.info(f"✅ Done")
             return True
             
-            
-        
             # Hint: Use await asyncio.sleep(seconds) to pace each action!
             # TODO: Add additional elifs for the other actions that KarelPupper supports,
             #       calling the correct pupper method, and using an appropriate sleep time after each command.
