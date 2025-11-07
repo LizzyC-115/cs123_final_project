@@ -326,6 +326,7 @@ class RealtimeVoiceNode(Node):
         """
 
         if not self.latest_camera_image_base64 or not self.camera_image_pending:
+            logger.info("No image is available. Returning now.")
             return
         
         image_message = {
