@@ -144,6 +144,10 @@ class KarelRealtimeCommanderNode(Node):
             return ['turn_right']
         elif 'turn_left' in line:
             return ['turn_left']
+        elif 'move_right' in line:
+            return ['move_right']
+        elif 'move_left' in line:
+            return ['move_left']
         elif 'wiggle' in line:
             return ['wiggle']
         elif 'bob' in line:
@@ -155,7 +159,8 @@ class KarelRealtimeCommanderNode(Node):
         elif 'stop' in line:
             return ['stop']
         elif 'start_tracking' in line:
-            return ['start_tracking', line.split('start_tracking')[1].strip()]
+            return ['start_tracking']
+            # return ['start_tracking', line.split('start_tracking')[1].strip()]
         elif 'stop_tracking' in line:
             return ['stop_tracking']
         elif 'describe_scene' in line:
@@ -183,7 +188,8 @@ class KarelRealtimeCommanderNode(Node):
             # TODO: Implement the mapping from canonical command names (e.g., "move", "turn_left", "bark", etc.) to the appropriate KarelPupper action and its timing.
             # One complete mapping is shown as an example!
             if command in ["start_tracking", "track"]:
-                self.pupper.begin_tracking(command.split(" ")[1])
+                # self.pupper.begin_tracking(command.split(" ")[1])
+                self.pupper.begin_tracking("person")
                 await asyncio.sleep(0.5)
             
             elif command in ["stop_tracking"]:
