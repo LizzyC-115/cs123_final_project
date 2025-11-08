@@ -161,7 +161,8 @@ class KarelRealtimeCommanderNode(Node):
         elif 'stop' in line:
             return ['stop']
         elif 'start_tracking' in line:
-            return ['start_tracking' + str(line.split('_')[2].strip())]
+            print(line)
+            return ['start_tracking' + '_' + str(line.split('_')[2].strip())]
             # return ['start_tracking', line.split('start_tracking')[1].strip()]
         elif 'stop_tracking' in line:
             return ['stop_tracking']
@@ -192,57 +193,84 @@ class KarelRealtimeCommanderNode(Node):
             if command in ["start_tracking", "track"]:
                 self.pupper.begin_tracking(command.split("_")[2])
                 await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["stop_tracking"]:
                 self.pupper.end_tracking()
                 await asyncio.sleep(0.5)
-
-            elif command in ["move_forwards", "go", "forward", "forwards", "move_forward"]:
+                logger.info(f"✅ Done")
+                return True
+            
+            elif command in ["move_backward", "back"]:
                 self.pupper.move_forward()
-                await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
+                await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
+
+            elif command in ["move_forward", "go", "forward", "forwards", "move"]:
+                self.pupper.move_forward()
+                await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["move_left"]:
                 self.pupper.move_left()
-                await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
+                await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["move_right"]:
                 self.pupper.move_right()
-                await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
-            
+                await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
+
             elif command in ["turn_left", "left"]:
                 self.pupper.turn_left()
                 await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["turn_right", "right"]:
                 self.pupper.turn_right()
                 await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["bark"]:
                 self.pupper.bark()
                 await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["wiggle"]:
                 self.pupper.wiggle()
                 await asyncio.sleep(5.5)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["bob"]:
                 self.pupper.bob()
                 await asyncio.sleep(5.5)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["dance"]:
                 self.pupper.dance()
                 await asyncio.sleep(12.0)
+                logger.info(f"✅ Done")
+                return True
             
             elif command in ["stop"]:
                 self.pupper.stop()
                 await asyncio.sleep(0.5)
+                logger.info(f"✅ Done")
+                return True
 
             else:
                 logger.warning(f"⚠️  Unknown command: {command}")
                 return False
-            
-            logger.info(f"✅ Done")
-            return True
             
             # Hint: Use await asyncio.sleep(seconds) to pace each action!
             # TODO: Add additional elifs for the other actions that KarelPupper supports,
