@@ -151,7 +151,7 @@ class RealtimeVoiceNode(Node):
         stand
 
         --- TRACKING ACTIONS (NEW) ---
-        start_tracking <object-name>
+        start_tracking_<object-name>
         stop_tracking
 
         Pupper supports tracking COCO-style objects including:
