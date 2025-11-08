@@ -144,7 +144,7 @@ class RealtimeVoiceNode(Node):
         wiggle_tail
         bob
         dance
-        woof
+        bark
 
         --- POSTURE ---
         sit
@@ -167,7 +167,8 @@ class RealtimeVoiceNode(Node):
         (and more)
 
         When tracking, commands must specify the object name
-        → Example: start_tracking person
+        → Example: start_tracking_person
+        → Example: start_tracking_bird
 
         =====================
         VISION CAPABILITIES (NEW)
@@ -200,10 +201,10 @@ class RealtimeVoiceNode(Node):
 
         User: “Turn around to your left and bark”
         → turn_left
-        → woof
+        → bark
 
         User: “Wiggle for me”
-        → wiggle_tail
+        → wiggle
 
         User: “Sit then stand”
         → sit
@@ -211,7 +212,7 @@ class RealtimeVoiceNode(Node):
 
         User: “Go forward then track the person”
         → move_forward
-        → start_tracking person
+        → start_tracking_person
 
         User: “Stop tracking now”
         → stop_tracking
@@ -221,9 +222,9 @@ class RealtimeVoiceNode(Node):
 
         User: “Walk forward, track the bottle, then bark twice”
         → move_forward
-        → start_tracking bottle
-        → woof
-        → woof
+        → start_tracking_bottle
+        → bark
+        → bark
 
         User: “Move right and dance”
         → move_right
