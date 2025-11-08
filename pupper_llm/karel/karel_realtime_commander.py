@@ -190,7 +190,7 @@ class KarelRealtimeCommanderNode(Node):
             
             # TODO: Implement the mapping from canonical command names (e.g., "move", "turn_left", "bark", etc.) to the appropriate KarelPupper action and its timing.
             # One complete mapping is shown as an example!
-            if command in ["start_tracking", "track"]:
+            if command in ["start_tracking_person", "track"]:
                 self.pupper.begin_tracking(command.split("_")[2])
                 await asyncio.sleep(0.5)
                 logger.info(f"✅ Done")
@@ -203,12 +203,12 @@ class KarelRealtimeCommanderNode(Node):
                 return True
             
             elif command in ["move_backward", "back"]:
-                self.pupper.move_forward()
+                self.pupper.move_backward()
                 await asyncio.sleep(0.5)
                 logger.info(f"✅ Done")
                 return True
 
-            elif command in ["move_forward", "go", "forward", "forwards", "move"]:
+            elif command in ["move_forward", "forward", "forwards", "move"]:
                 self.pupper.move_forward()
                 await asyncio.sleep(0.5)
                 logger.info(f"✅ Done")
