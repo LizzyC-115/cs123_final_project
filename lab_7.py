@@ -17,7 +17,7 @@ IMAGE_WIDTH = 700
 # TODO: Define constants for the state machine behavior
 TIMEOUT = 3  # TODO: Set the timeout threshold (in seconds) for determining when a detection is too old
 SEARCH_YAW_VEL = 0.5  # TODO: Set the angular velocity (rad/s) for rotating while searching for the target
-TRACK_FORWARD_VEL = 0.2  # TODO: Set the forward velocity (m/s) while tracking the target
+TRACK_FORWARD_VEL = 0.75  # TODO: Set the forward velocity (m/s) while tracking the target
 KP = 2.0  # TODO: Set the proportional gain for the proportional controller that centers the target
 
 class State(Enum):
