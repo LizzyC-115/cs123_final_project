@@ -138,7 +138,7 @@ class RealtimeVoiceNode(Node):
         turn_right       # turn 90° (or implied) right in place
         move_left        # strafe left
         move_right       # strafe right
-        stop
+        stop             # stop all movement, and stop tracking if it is active
 
         --- FUN ACTIONS ---
         wiggle_tail
@@ -152,7 +152,6 @@ class RealtimeVoiceNode(Node):
 
         --- TRACKING ACTIONS (NEW) ---
         start_tracking_<object-name>
-        stop_tracking
 
         Pupper supports tracking COCO-style objects including:
         person, dog, cat, bird, bicycle, car, motorcycle, bus, train, truck, boat,
@@ -214,8 +213,14 @@ class RealtimeVoiceNode(Node):
         → move_forward
         → start_tracking_person
 
+        User: “Stop”
+        → stop
+        
+        User: “Stop moving”
+        → stop
+        
         User: “Stop tracking now”
-        → stop_tracking
+        → stop
 
         User: “Look around — what do you see?”
         → describe_scene

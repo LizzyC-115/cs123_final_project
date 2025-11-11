@@ -164,8 +164,8 @@ class KarelRealtimeCommanderNode(Node):
             print(line)
             return ['start_tracking' + '_' + str(line.split('_')[2].strip())]
             # return ['start_tracking', line.split('start_tracking')[1].strip()]
-        elif 'stop_tracking' in line:
-            return ['stop_tracking']
+        # elif 'stop_tracking' in line:
+        #     return ['stop_tracking']
         elif 'describe_scene' in line:
             return ['describe_scene']
         
@@ -196,11 +196,11 @@ class KarelRealtimeCommanderNode(Node):
                 logger.info(f"✅ Done")
                 return True
             
-            elif command in ["stop_tracking"]:
-                self.pupper.end_tracking()
-                await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
+            # elif command in ["stop_tracking"]:
+            #     self.pupper.end_tracking()
+            #     await asyncio.sleep(0.5)
+            #     logger.info(f"✅ Done")
+            #     return True
             
             elif command in ["move_backward", "back"]:
                 self.pupper.move_backward()
@@ -263,6 +263,8 @@ class KarelRealtimeCommanderNode(Node):
                 return True
             
             elif command in ["stop"]:
+                if self.pupper.tracking_enabled:
+                    self.pupper.end_tracking()
                 self.pupper.stop()
                 await asyncio.sleep(0.5)
                 logger.info(f"✅ Done")
