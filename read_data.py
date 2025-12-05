@@ -100,6 +100,7 @@ class LoadCellPublisher(Node):
                             msg.data = command
                             self.publisher_.publish(msg)
                             self.get_logger().info(f'Published command: "{command}"')
+                            time.sleep(1.5)
                         
         except serial.SerialException as e:
             self.get_logger().error(f'Serial read error: {e}')
