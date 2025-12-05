@@ -64,6 +64,18 @@ ros2 launch "$PROJECT_ROOT/lab_7.launch.py" > /dev/null 2>&1 &
 ROS_PID=$!
 sleep 3
 
+# Start read_data.py
+echo "1️⃣  Reading data from sensor..."
+ros2 launch "$PROJECT_ROOT/read_data.py" > /dev/null 2>&1 &
+RD_PID=$!
+sleep 3
+
+# Start movement_subscriber.py
+echo "1️⃣  Start moment_subscriber.py..."
+ros2 launch "$PROJECT_ROOT/movement_subscriber.py" > /dev/null 2>&1 &
+MS_PID=$!
+sleep 3
+
 # Start Foxglove bridge - silenced
 echo "2️⃣  Launching Foxglove Bridge..."
 ros2 launch foxglove_bridge foxglove_bridge_launch.xml > /dev/null 2>&1 &
