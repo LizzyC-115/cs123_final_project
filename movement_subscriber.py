@@ -49,7 +49,7 @@ class MovementSubscriber(Node):
         Args:
             msg: String message containing 'left', 'right', or 'stop'
         """
-        command = msg.data[1:-1].lower()
+        command = msg.data.lower()
         self.get_logger().info(f'Received command: "{command}"')
         
         if command == 'turn_left':
