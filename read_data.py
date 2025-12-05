@@ -50,6 +50,23 @@ class LoadCellPublisher(Node):
             self.ser = None
 
     def timer_callback(self):
+        # Use for disconnected testing (pivot left and right)
+        while True:
+            try:
+                msg = String()
+                msg.data = "[TURN_LEFT]"
+                self.publisher_.publish(msg)
+                self.get_logger().info(f'Published command: "{"[TURN_LEFT]"}"')
+                time.sleep(1.0)
+                msg = String()
+                msg.data = "[TURN_RIGHT]"
+                self.publisher_.publish(msg)
+                self.get_logger().info(f'Published command: "{"[TURN_RIGHT]"}"')
+                time.sleep(1.0)
+            except KeyboardInterrupt:
+                "User stopped test"
+                return
+    
         """Read serial data and publish movement commands."""
         if self.ser is None:
             self.get_logger().warn('Serial not connected, attempting reconnect...')
@@ -67,10 +84,10 @@ class LoadCellPublisher(Node):
                     command = self.parse_data(line)
                     
                     if command:
-                        msg = String()
-                        msg.data = command
-                        self.publisher_.publish(msg)
-                        self.get_logger().info(f'Published command: "{command}"')
+                            msg = String()
+                            msg.data = command
+                            self.publisher_.publish(msg)
+                            self.get_logger().info(f'Published command: "{command}"')
                         
         except serial.SerialException as e:
             self.get_logger().error(f'Serial read error: {e}')
