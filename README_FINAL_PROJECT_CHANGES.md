@@ -6,6 +6,7 @@ We are using a custom ROS2 publisher and subscriber node to publish sensor readi
     - movement_subscriber.py (subscriber node logic)
     - read_data.py (publisher logic; print sensor data to terminal)
     - added movement_subscriber (line 108) and read_data (line 101) as nodes to lab_7.launch.py
+    - sense_tension.py (file run by the Raspbery Pi Pico W)
 
 
 # ROS2 Configuration

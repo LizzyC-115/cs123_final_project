@@ -58,6 +58,8 @@ class MovementSubscriber(Node):
             self.move_right()
         elif command == 'stop':
             self.stop()
+        elif command == '':
+            self.get_logger().info('No command. Continuing...')
         else:
             self.get_logger().warn(f'Unknown command: "{command}"')
 
