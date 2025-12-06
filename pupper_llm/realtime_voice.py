@@ -210,7 +210,7 @@ class RealtimeVoiceNode(Node):
         }
         
         try:
-            self.websocket = await websockets.connect(url, extra_headers=headers)
+            self.websocket = await websockets.connect(url, additional_headers=headers)
             logger.info("✅ Connected to OpenAI Realtime API")
             
             # Configure session
