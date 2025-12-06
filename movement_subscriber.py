@@ -17,6 +17,7 @@ from geometry_msgs.msg import Twist
 import asyncio
 import time
 import logging
+from pupper_llm.karel import karel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -49,6 +50,7 @@ class MovementSubscriber(Node):
         self.move_duration = 2.0  # seconds (same as KarelPupper)
         
         # Command queue with timestamps (async pattern from karel_realtime_commander)
+        self.pupper = karel.KarelPupper()
         self.command_queue = asyncio.Queue()
         self.command_timeout = 20.0  # Discard commands older than 20 seconds
         
@@ -76,27 +78,36 @@ class MovementSubscriber(Node):
             move_cmd = Twist()
             
             if command in ['left', 'move_left', 'strafe_left']:
-                move_cmd.linear.y = self.linear_speed  # Positive y = strafe left
-                await self.publish_movement(move_cmd)
+                self.pupper.move_left()
+                await asyncio.sleep(0.5)
+
             elif command in ['right', 'move_right', 'strafe_right']:
-                move_cmd.linear.y = -self.linear_speed  # Negative y = strafe right
-                await self.publish_movement(move_cmd)
+                self.pupper.move_right()
+                await asyncio.sleep(0.5)
+
             elif command in ['stop', 's']:
-                await self.stop()
+                self.pupper.stop()
+                await asyncio.sleep(0.5)
+
             elif command in ['forward', 'move_forward', 'move']:
-                move_cmd.linear.x = self.linear_speed
-                await self.publish_movement(move_cmd)
+                self.pupper.move_forward()
+                await asyncio.sleep(0.5)
+
             elif command in ['backward', 'move_backward', 'back']:
-                move_cmd.linear.x = -self.linear_speed
-                await self.publish_movement(move_cmd)
+                self.pupper.move_backward()
+                await asyncio.sleep(0.5)
+
             elif command in ['turn_left']:
-                move_cmd.angular.z = self.angular_speed
-                await self.publish_movement(move_cmd)
+                self.pupper.turn_left()
+                await asyncio.sleep(0.5)
+
             elif command in ['turn_right']:
-                move_cmd.angular.z = -self.angular_speed
-                await self.publish_movement(move_cmd)
+                self.pupper.turn_right()
+                await asyncio.sleep(0.5)
+
             elif command == '[]' or command == '':
                 await asyncio.sleep(0.1)
+
             else:
                 logger.warning(f"⚠️  Unknown command: {command}")
                 return False
