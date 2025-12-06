@@ -1,12 +1,13 @@
 # Overview
 We are using a custom ROS2 publisher and subscriber node to publish sensor readings from a Raspberry Pi Pico W. The Raspberry Pi 4 from Pupper will be subscribed to this node.
 
-# Changes to lab_7_fall_2025:
+# Changes to lab_6_fall_2025:
 - Added files:
     - movement_subscriber.py (subscriber node logic)
     - read_data.py (publisher logic; print sensor data to terminal)
     - added movement_subscriber (line 108) and read_data (line 101) as nodes to lab_7.launch.py
     - sense_tension.py (file run by the Raspbery Pi Pico W)
+    - run_sensors.sh (script to run launch, read_data.py, and movement_subscriber.py)
 
 
 # ROS2 Configuration
