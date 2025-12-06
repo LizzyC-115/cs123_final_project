@@ -162,6 +162,10 @@ async def main_async(args=None):
     executor = SingleThreadedExecutor()
     executor.add_node(node)
     
+    # IMPORTANT: Also add KarelPupper's internal node to the executor
+    # so its cmd_vel publisher actually works
+    executor.add_node(node.pupper.node)
+    
     try:
         logger.info("🚀 Movement Subscriber started")
         logger.info("Ready to receive commands on /movement_command")
