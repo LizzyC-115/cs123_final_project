@@ -12,7 +12,11 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
+import karel
 
+import asyncio
+from typing import Optional, Tuple
+from rclpy.executors import SingleThreadedExecutor
 
 class MovementSubscriber(Node):
     """
@@ -36,6 +40,11 @@ class MovementSubscriber(Node):
         # Movement parameters (adjust these for your robot)
         self.linear_speed = 0.5  # Speed for left/right movement
         self.move_duration = 0.5  # Duration of each movement in seconds
+
+        self.pupper = karel.KarelPupper()
+        self.command_queue = asyncio.Queue()
+        self.processing_commands = False
+        self.command_timeout = 20.0  # Clear commands older than 20 seconds
         
         # Timer for stopping after movement
         self.stop_timer = None
@@ -53,11 +62,11 @@ class MovementSubscriber(Node):
         self.get_logger().info(f'Received command: "{command}"')
         
         if command == 'turn_left':
-            self.move_left()
+            self.pupper.move_left()
         elif command == 'turn_right':
-            self.move_right()
+            self.pupper.move_right()
         elif command == 'stop':
-            self.stop()
+            self.pupper.stop()
         elif command == '':
             self.get_logger().info('No command. Continuing...')
         else:
