@@ -1,145 +1,278 @@
+#!/usr/bin/env python3
 """
-Used by Pupper's Raspberry Pi 4 to read the serial outputs from the Raspberry Pi Pico W.
+Sensor Commander - Combined serial reader and robot controller.
 
-Reads data from the serial port (load cell/sensor data) and publishes movement commands
-to the '/movement_command' topic. A subscriber node will receive these commands and
-control the Pupper to move left or right.
+Reads data from the serial port (load cell/sensor data from Pico W) and
+directly controls the Pupper robot using KarelPupper.
+
+Based on karel_realtime_commander.py async pattern.
 
 Usage: python3 read_data.py
 """
 
+import asyncio
 import serial
 import time
+import logging
+
 import rclpy
 from rclpy.node import Node
-
+from rclpy.executors import SingleThreadedExecutor
 from std_msgs.msg import String
+import sys
+sys.path.insert(0, 'pupper_llm/karel')
+import karel
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("sensor_commander")
 
 
-class LoadCellPublisher(Node):
+class SensorCommanderNode(Node):
     """
-    ROS2 Publisher node that reads serial data from Pico W and publishes
-    movement commands ('left' or 'right') based on the sensor readings.
+    Combined node that reads serial data and controls the robot directly.
+    Uses KarelPupper for movement (same pattern as karel_realtime_commander.py).
     """
 
-    def __init__(self, serial_port='/dev/ttyACM0', baud_rate=115200):
-        super().__init__('load_cell_publisher')
-        
-        # Publisher for movement commands
-        self.publisher_ = self.create_publisher(String, '/movement_command', 10)
+    def __init__(self, serial_port='/dev/ttyACM0', baud_rate=115200, test_mode=False):
+        super().__init__('sensor_commander')
         
         # Initialize serial connection
         self.serial_port = serial_port
         self.baud_rate = baud_rate
         self.ser = None
-        self.connect_serial()
+        self.test_mode = test_mode
         
-        # Timer to read serial data periodically
-        timer_period = 0.1  # 100ms for responsive control
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        if not test_mode:
+            self.connect_serial()
         
-        self.get_logger().info(f'LoadCellPublisher initialized on {serial_port}')
+        # Initialize KarelPupper for robot control
+        self.pupper = karel.KarelPupper()
+        
+        # Command queue with timestamps
+        self.command_queue = asyncio.Queue()
+        self.command_timeout = 20.0  # Discard commands older than 20 seconds
+        
+        logger.info(f'SensorCommander initialized (test_mode={test_mode})')
 
     def connect_serial(self):
         """Attempt to connect to the serial port."""
         try:
             self.ser = serial.Serial(self.serial_port, self.baud_rate, timeout=1)
-            self.get_logger().info(f'Connected to serial port {self.serial_port}')
+            logger.info(f'Connected to serial port {self.serial_port}')
         except serial.SerialException as e:
-            self.get_logger().error(f'Failed to connect to serial port: {e}')
+            logger.error(f'Failed to connect to serial port: {e}')
             self.ser = None
-
-    def timer_callback(self):
-        # Use for disconnected testing (pivot left and right)
-        while True:
-            try:
-                for i in range(10):
-                    msg = String()
-                    msg.data = "[]"
-                    self.publisher_.publish(msg)
-                    self.get_logger().info(f'Published command: "{"[]"}"')
-                    time.sleep(1.0)
-                msg = String()
-                msg.data = "[TURN_LEFT]"
-                self.publisher_.publish(msg)
-                self.get_logger().info(f'Published command: "{"[TURN_LEFT]"}"')
-                time.sleep(1.0)
-                for i in range(10):
-                    msg = String()
-                    msg.data = "[]"
-                    self.publisher_.publish(msg)
-                    self.get_logger().info(f'Published command: "{"[]"}"')
-                    time.sleep(1.0)
-                msg = String()
-                msg.data = "[TURN_RIGHT]"
-                self.publisher_.publish(msg)
-                self.get_logger().info(f'Published command: "{"[TURN_RIGHT]"}"')
-                time.sleep(1.0)
-            except KeyboardInterrupt:
-                "User stopped test"
-                return
-    
-        """Read serial data and publish movement commands."""
-        if self.ser is None:
-            self.get_logger().warn('Serial not connected, attempting reconnect...')
-            self.connect_serial()
-            return
-        
-        try:
-            if self.ser.in_waiting > 0:
-                line = self.ser.readline().decode('utf-8').strip()
-                
-                if line:
-                    self.get_logger().info(f'Received: "{line}"')
-                    
-                    # Parse the data and determine movement command
-                    command = self.parse_data(line)
-                    
-                    if command:
-                            msg = String()
-                            msg.data = command
-                            self.publisher_.publish(msg)
-                            self.get_logger().info(f'Published command: "{command}"')
-                            time.sleep(1.5)
-                        
-        except serial.SerialException as e:
-            self.get_logger().error(f'Serial read error: {e}')
-            self.ser = None
-        except UnicodeDecodeError as e:
-            self.get_logger().warn(f'Decode error: {e}')
 
     def parse_data(self, data: str) -> str:
+        """Parse serial data and return a command string."""
         data_lower = data.lower().strip()
         
-        # Check for explicit direction commands
-        if 'left' in data_lower or data_lower == 'l':
+        # Strip brackets if present (e.g., "[TURN_LEFT]" -> "turn_left")
+        if data_lower.startswith('[') and data_lower.endswith(']'):
+            data_lower = data_lower[1:-1]
+        
+        # Map to commands
+        if 'turn_left' in data_lower or data_lower == 'l':
             return 'turn_left'
-        elif 'right' in data_lower or data_lower == 'r':
+        elif 'turn_right' in data_lower or data_lower == 'r':
             return 'turn_right'
+        elif 'left' in data_lower:
+            return 'move_left'
+        elif 'right' in data_lower:
+            return 'move_right'
+        elif 'forward' in data_lower:
+            return 'move_forward'
+        elif 'backward' in data_lower or 'back' in data_lower:
+            return 'move_backward'
+        elif 'stop' in data_lower:
+            return 'stop'
         else:
             return None
 
+    async def read_serial_loop(self):
+        """Async loop to read serial data and queue commands."""
+        logger.info("🔄 Serial reader started")
+        
+        while rclpy.ok():
+            try:
+                if self.test_mode:
+                    # Test mode: alternate left/right every 10 seconds
+                    await self.run_test_sequence()
+                elif self.ser is None:
+                    logger.warn('Serial not connected, attempting reconnect...')
+                    self.connect_serial()
+                    await asyncio.sleep(1.0)
+                elif self.ser.in_waiting > 0:
+                    line = self.ser.readline().decode('utf-8').strip()
+                    if line:
+                        logger.info(f'📡 Received: "{line}"')
+                        command = self.parse_data(line)
+                        if command:
+                            current_time = time.time()
+                            await self.command_queue.put((command, current_time))
+                            logger.info(f'📋 Queued command: {command}')
+                else:
+                    await asyncio.sleep(0.05)  # Small delay when no data
+                    
+            except serial.SerialException as e:
+                logger.error(f'Serial read error: {e}')
+                self.ser = None
+                await asyncio.sleep(1.0)
+            except UnicodeDecodeError as e:
+                logger.warn(f'Decode error: {e}')
+            except Exception as e:
+                logger.error(f'Error in serial loop: {e}')
+                await asyncio.sleep(0.1)
+
+    async def run_test_sequence(self):
+        """Test sequence when no serial connected."""
+        # Wait 10 seconds
+        for i in range(10):
+            logger.info(f'Test mode: waiting... ({10-i}s)')
+            await asyncio.sleep(1.0)
+        
+        # Queue turn_left
+        await self.command_queue.put(('turn_left', time.time()))
+        logger.info('📋 Test: Queued turn_left')
+        
+        # Wait 10 seconds
+        for i in range(10):
+            logger.info(f'Test mode: waiting... ({10-i}s)')
+            await asyncio.sleep(1.0)
+        
+        # Queue turn_right
+        await self.command_queue.put(('turn_right', time.time()))
+        logger.info('📋 Test: Queued turn_right')
+
+    async def execute_command(self, command: str) -> bool:
+        """Execute a single robot command using KarelPupper."""
+        try:
+            logger.info(f"⚙️  Executing: {command}")
+            
+            if command in ['move_forward', 'forward']:
+                self.pupper.move_forward()
+                await asyncio.sleep(0.5)
+            elif command in ['move_backward', 'backward', 'back']:
+                self.pupper.move_backward()
+                await asyncio.sleep(0.5)
+            elif command in ['move_left', 'left', 'strafe_left']:
+                self.pupper.move_left()
+                await asyncio.sleep(0.5)
+            elif command in ['move_right', 'right', 'strafe_right']:
+                self.pupper.move_right()
+                await asyncio.sleep(0.5)
+            elif command == 'turn_left':
+                self.pupper.turn_left()
+                await asyncio.sleep(0.5)
+            elif command == 'turn_right':
+                self.pupper.turn_right()
+                await asyncio.sleep(0.5)
+            elif command == 'stop':
+                self.pupper.stop()
+                await asyncio.sleep(0.1)
+            else:
+                logger.warning(f"⚠️  Unknown command: {command}")
+                return False
+            
+            logger.info(f"✅ Done: {command}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error executing {command}: {e}")
+            return False
+
+    async def command_processor_loop(self):
+        """Process commands from the queue."""
+        logger.info("🔄 Command processor started")
+        
+        while rclpy.ok():
+            try:
+                # Get next command with timestamp
+                command_data = await asyncio.wait_for(
+                    self.command_queue.get(),
+                    timeout=0.1
+                )
+                
+                command, timestamp = command_data
+                
+                # Check if command is stale
+                age = time.time() - timestamp
+                if age > self.command_timeout:
+                    logger.warning(f"⏰ Discarding stale command '{command}' (age: {age:.1f}s)")
+                    continue
+                
+                # Execute command
+                await self.execute_command(command)
+                
+            except asyncio.TimeoutError:
+                continue
+            except Exception as e:
+                logger.error(f"Error in command processor: {e}")
+                await asyncio.sleep(0.1)
+
+    async def run(self):
+        """Main run loop - runs both serial reader and command processor."""
+        serial_task = asyncio.create_task(self.read_serial_loop())
+        command_task = asyncio.create_task(self.command_processor_loop())
+        await asyncio.gather(serial_task, command_task)
+
     def destroy_node(self):
-        """Clean up serial connection on shutdown."""
+        """Clean up."""
         if self.ser:
             self.ser.close()
-            self.get_logger().info('Serial connection closed')
+            logger.info('Serial connection closed')
         super().destroy_node()
 
 
-def main(args=None):
+async def spin_ros_async(executor):
+    """Spin ROS2 executor in async-friendly way."""
+    while rclpy.ok():
+        executor.spin_once(timeout_sec=0.1)
+        await asyncio.sleep(0.01)
+
+
+async def main_async(args=None):
+    """Async main function."""
     rclpy.init(args=args)
-
-    # Create the publisher node
-    load_cell_publisher = LoadCellPublisher()
-
+    
+    # Check for test mode flag
+    test_mode = '--test' in (args or []) or '--test' in sys.argv
+    
+    node = SensorCommanderNode(test_mode=test_mode)
+    executor = SingleThreadedExecutor()
+    executor.add_node(node)
+    
+    # Add KarelPupper's node to the executor so its publisher works
+    executor.add_node(node.pupper.node)
+    
     try:
-        rclpy.spin(load_cell_publisher)
+        logger.info("🚀 Sensor Commander started")
+        if test_mode:
+            logger.info("🧪 Running in TEST MODE (no serial required)")
+        else:
+            logger.info("📡 Reading from serial port")
+        
+        # Create tasks
+        ros_task = asyncio.create_task(spin_ros_async(executor))
+        main_task = asyncio.create_task(node.run())
+        
+        await asyncio.gather(ros_task, main_task)
+        
     except KeyboardInterrupt:
-        pass
+        logger.info("Shutting down...")
     finally:
-        load_cell_publisher.destroy_node()
+        node.destroy_node()
+        executor.shutdown()
         rclpy.shutdown()
+
+
+def main(args=None):
+    """Entry point."""
+    try:
+        asyncio.run(main_async(args))
+    except KeyboardInterrupt:
+        logger.info("Program interrupted")
 
 
 if __name__ == '__main__':
