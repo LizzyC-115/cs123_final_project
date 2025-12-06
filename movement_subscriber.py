@@ -55,7 +55,7 @@ class MovementSubscriber(Node):
         Callback for receiving movement commands.
         Queues commands for async processing.
         """
-        command = msg.data.lower().strip()
+        command = msg.data[1:-1].lower().strip()
         logger.info(f'Received command: "{command}"')
         
         if command:
@@ -89,6 +89,8 @@ class MovementSubscriber(Node):
                 await asyncio.sleep(0.5)
             elif command in ['turn_right']:
                 self.pupper.turn_right()
+                await asyncio.sleep(0.5)
+            elif command == '[]':
                 await asyncio.sleep(0.5)
             else:
                 logger.warning(f"⚠️  Unknown command: {command}")

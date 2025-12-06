@@ -224,7 +224,7 @@ class KarelPupper:
             self.publisher.publish(move_cmd)
             rclpy.spin_once(self.node, timeout_sec=0.01)
         
-        self.node.get_logger().info('Turn left...')
+        self.node.get_logger().info('Turn right...')
         self.stop()
 
     def bark(self):

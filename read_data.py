@@ -51,33 +51,33 @@ class LoadCellPublisher(Node):
 
     def timer_callback(self):
         # Use for disconnected testing (pivot left and right)
-        # while True:
-        #     try:
-        #         for i in range(10):
-        #             msg = String()
-        #             msg.data = "[]"
-        #             self.publisher_.publish(msg)
-        #             self.get_logger().info(f'Published command: "{"[]"}"')
-        #             time.sleep(1.0)
-        #         msg = String()
-        #         msg.data = "[TURN_LEFT]"
-        #         self.publisher_.publish(msg)
-        #         self.get_logger().info(f'Published command: "{"[TURN_LEFT]"}"')
-        #         time.sleep(1.0)
-        #         for i in range(10):
-        #             msg = String()
-        #             msg.data = "[]"
-        #             self.publisher_.publish(msg)
-        #             self.get_logger().info(f'Published command: "{"[]"}"')
-        #             time.sleep(1.0)
-        #         msg = String()
-        #         msg.data = "[TURN_RIGHT]"
-        #         self.publisher_.publish(msg)
-        #         self.get_logger().info(f'Published command: "{"[TURN_RIGHT]"}"')
-        #         time.sleep(1.0)
-        #     except KeyboardInterrupt:
-        #         "User stopped test"
-        #         return
+        while True:
+            try:
+                for i in range(10):
+                    msg = String()
+                    msg.data = "[]"
+                    self.publisher_.publish(msg)
+                    self.get_logger().info(f'Published command: "{"[]"}"')
+                    time.sleep(1.0)
+                msg = String()
+                msg.data = "[TURN_LEFT]"
+                self.publisher_.publish(msg)
+                self.get_logger().info(f'Published command: "{"[TURN_LEFT]"}"')
+                time.sleep(1.0)
+                for i in range(10):
+                    msg = String()
+                    msg.data = "[]"
+                    self.publisher_.publish(msg)
+                    self.get_logger().info(f'Published command: "{"[]"}"')
+                    time.sleep(1.0)
+                msg = String()
+                msg.data = "[TURN_RIGHT]"
+                self.publisher_.publish(msg)
+                self.get_logger().info(f'Published command: "{"[TURN_RIGHT]"}"')
+                time.sleep(1.0)
+            except KeyboardInterrupt:
+                "User stopped test"
+                return
     
         """Read serial data and publish movement commands."""
         if self.ser is None:
