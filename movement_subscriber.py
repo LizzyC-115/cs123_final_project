@@ -13,7 +13,6 @@ from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
-import karel
 
 import asyncio
 import time
@@ -27,7 +26,7 @@ logger = logging.getLogger("movement_subscriber")
 class MovementSubscriber(Node):
     """
     ROS2 Subscriber node that receives movement commands and controls Pupper.
-    Uses async pattern like karel_realtime_commander_lab6.py for proper execution.
+    Publishes Twist messages directly to cmd_vel (no KarelPupper to avoid node conflicts).
     """
 
     def __init__(self):
@@ -41,8 +40,13 @@ class MovementSubscriber(Node):
             10
         )
         
-        # Initialize KarelPupper for robot control
-        self.pupper = karel.KarelPupper()
+        # Publisher for velocity commands - publish directly to cmd_vel
+        self.cmd_vel_publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        
+        # Movement parameters
+        self.linear_speed = 1.0
+        self.angular_speed = 1.0
+        self.move_duration = 2.0  # seconds (same as KarelPupper)
         
         # Command queue with timestamps (async pattern from karel_realtime_commander)
         self.command_queue = asyncio.Queue()
@@ -65,33 +69,34 @@ class MovementSubscriber(Node):
             asyncio.create_task(self.command_queue.put(command_with_time))
 
     async def execute_command(self, command: str) -> bool:
-        """Execute a single robot command using KarelPupper."""
+        """Execute a single robot command by publishing Twist messages directly."""
         try:
             logger.info(f"⚙️  Executing: {command}")
             
+            move_cmd = Twist()
+            
             if command in ['left', 'move_left', 'strafe_left']:
-                self.pupper.move_left()
-                await asyncio.sleep(0.5)
+                move_cmd.linear.y = self.linear_speed  # Positive y = strafe left
+                await self.publish_movement(move_cmd)
             elif command in ['right', 'move_right', 'strafe_right']:
-                self.pupper.move_right()
-                await asyncio.sleep(0.5)
+                move_cmd.linear.y = -self.linear_speed  # Negative y = strafe right
+                await self.publish_movement(move_cmd)
             elif command in ['stop', 's']:
-                self.pupper.stop()
-                await asyncio.sleep(0.1)
+                await self.stop()
             elif command in ['forward', 'move_forward', 'move']:
-                self.pupper.move_forward()
-                await asyncio.sleep(0.5)
+                move_cmd.linear.x = self.linear_speed
+                await self.publish_movement(move_cmd)
             elif command in ['backward', 'move_backward', 'back']:
-                self.pupper.move_backward()
-                await asyncio.sleep(0.5)
+                move_cmd.linear.x = -self.linear_speed
+                await self.publish_movement(move_cmd)
             elif command in ['turn_left']:
-                self.pupper.turn_left()
-                await asyncio.sleep(0.5)
+                move_cmd.angular.z = self.angular_speed
+                await self.publish_movement(move_cmd)
             elif command in ['turn_right']:
-                self.pupper.turn_right()
-                await asyncio.sleep(0.5)
-            elif command == '[]':
-                await asyncio.sleep(0.5)
+                move_cmd.angular.z = -self.angular_speed
+                await self.publish_movement(move_cmd)
+            elif command == '[]' or command == '':
+                await asyncio.sleep(0.1)
             else:
                 logger.warning(f"⚠️  Unknown command: {command}")
                 return False
@@ -102,6 +107,27 @@ class MovementSubscriber(Node):
         except Exception as e:
             logger.error(f"❌ Error executing {command}: {e}")
             return False
+
+    async def publish_movement(self, move_cmd: Twist):
+        """Publish movement command for the duration, then stop."""
+        start_time = time.time()
+        while time.time() - start_time < self.move_duration:
+            self.cmd_vel_publisher.publish(move_cmd)
+            await asyncio.sleep(0.01)  # Publish at ~100Hz
+        await self.stop()
+
+    async def stop(self):
+        """Stop all movement."""
+        logger.info("Stopping...")
+        move_cmd = Twist()
+        move_cmd.linear.x = 0.0
+        move_cmd.linear.y = 0.0
+        move_cmd.linear.z = 0.0
+        move_cmd.angular.x = 0.0
+        move_cmd.angular.y = 0.0
+        move_cmd.angular.z = 0.0
+        self.cmd_vel_publisher.publish(move_cmd)
+        await asyncio.sleep(0.1)
 
     async def command_processor_loop(self):
         """Process commands from the queue with timeout checking."""
