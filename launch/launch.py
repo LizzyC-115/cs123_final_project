@@ -1,10 +1,11 @@
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler
+from launch.actions import RegisterEventHandler, ExecuteProcess
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
 from launch_ros.parameter_descriptions import ParameterFile
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+import os
 
 
 def generate_launch_description():
@@ -100,6 +101,21 @@ def generate_launch_description():
         ],
     )
 
+    launch_file_dir = os.path.dirname(os.path.abspath(__file__))
+
+    load_cell_publisher = ExecuteProcess(
+        cmd=['python3', os.path.join(launch_file_dir, 'read_data.py')],
+        name='load_cell_publisher',
+        output='both',
+    )
+
+    # Movement subscriber - receives commands and controls Pupper movement
+    movement_subscriber = ExecuteProcess(
+        cmd=['python3', os.path.join(launch_file_dir, 'movement_subscriber.py')],
+        name='movement_subscriber',
+        output='both',
+    )
+
     nodes = [
         robot_state_publisher,
         # imu_sensor_broadcaster_spawner,
@@ -108,6 +124,8 @@ def generate_launch_description():
         joint_state_broadcaster_spawner,
         joy_node,
         teleop_twist_joy_node,
+        load_cell_publisher,
+        movement_subscriber
     ]
 
     # nodes = [
