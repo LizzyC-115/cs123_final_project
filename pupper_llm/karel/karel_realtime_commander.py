@@ -65,8 +65,7 @@ class KarelRealtimeCommanderNode(Node):
         logger.info(f"🤖 Response: {response}")
         all_commands = []
         
-        # TODO: Paste your Lab 6 command parsing implementation here
-        # Parse commands from the response text line by line and dispatch them in order into the `all_commands` list.
+        # TODO: Parse commands from the response text line by line and dispatch them in order into the `all_commands` list.
         # 1. Split the `response` string into lines using `\n` as a separator.
         # 2. For each line that is not blank, call `self.extract_commands_from_line(line.strip())` to get a list of commands from that line.
         # 3. Collect all commands, preserving the original order.
@@ -85,8 +84,8 @@ class KarelRealtimeCommanderNode(Node):
             if line.strip():
                 commands = self.extract_commands_from_line(line.strip())
                 all_commands.extend(commands)
-                print(all_commands)
 
+        
         if all_commands:
             logger.info(f"📋 Commands (in order): {all_commands}")
             # Queue commands with timestamp in sequential order
@@ -99,7 +98,7 @@ class KarelRealtimeCommanderNode(Node):
     
     def extract_commands_from_line(self, line: str) -> list:
         """
-        TODO: Paste your Lab 6 implementation and extend it for tracking commands.
+        TODO: Implement this function to extract robot commands from a single line of text.
 
         HINTS:
         - The parsing logic will depend on exactly how you format your GPT model/system prompt!
@@ -107,23 +106,6 @@ class KarelRealtimeCommanderNode(Node):
         - Think carefully about the sequential structure of the LLM's output and how your system prompt tells the model to format commands.
         - For example, if your prompt instructs GPT to output one command per line, you should parse only a single command from each line.
         - You may need to match/substitute multiple possible phrasings (e.g. "move forward", "walk forward") to a canonical command like "move".
-        
-        NEW FOR LAB 7 - Tracking Commands:
-        - Add detection for "start tracking [object]" or "track the [object]" or "follow the [object]"
-        - Extract the object name (e.g., "person", "dog", "cat") from the phrase
-        - Return a command like "track_person" or "track_dog" (format: "track_{object_name}")
-        - Add detection for "stop tracking" or "stop following" → return "stop_tracking"
-        
-        Example tracking command parsing:
-            line = "Start tracking person"
-            → extract "person" and return ["track_person"]
-            
-            line = "Follow the dog"
-            → extract "dog" and return ["track_dog"]
-            
-            line = "Stop tracking"
-            → return ["stop_tracking"]
-        
         - Construct and return a list of action strings (e.g. ['move', 'turn_left']) extracted from the line.
         - Test your command extraction logic carefully, since if the output is not sequential, your robot may behave out of order!
 
@@ -136,38 +118,24 @@ class KarelRealtimeCommanderNode(Node):
         """
         logger.info(f"🔍 Behavior line: {line}")
 
-        if 'move_forward' in line:
+        if 'move_forward' in line or 'move_forwards' in line:
             return ['move_forward']
-        elif 'move_backward' in line:
+        elif 'move_backward' in line or 'move_backwards' in line:
             return ['move_backward']
         elif 'turn_right' in line:
             return ['turn_right']
         elif 'turn_left' in line:
             return ['turn_left']
-        elif 'move_right' in line:
-            return ['move_right']
-        elif 'move_left' in line:
-            return ['move_left']
         elif 'wiggle' in line:
             return ['wiggle']
         elif 'bob' in line:
             return ['bob']
-        elif 'bark' in line:
-            return ['bark']
         elif 'sit' in line:
             return ['sit']
         elif 'stand' in line:
             return ['stand']
         elif 'stop' in line:
             return ['stop']
-        elif 'start_tracking' in line:
-            print(line)
-            return ['start_tracking' + '_' + str(line.split('_')[2].strip())]
-            # return ['start_tracking', line.split('start_tracking')[1].strip()]
-        # elif 'stop_tracking' in line:
-        #     return ['stop_tracking']
-        elif 'describe_scene' in line:
-            return ['describe_scene']
         
         return []
     
@@ -176,113 +144,51 @@ class KarelRealtimeCommanderNode(Node):
         try:
             logger.info(f"⚙️  Executing {command}")
             
-            # NEW FOR LAB 7: Handle tracking commands
-            # TODO: Add tracking command handling BEFORE your Lab 6 command mappings
-            # - If command starts with "track_", extract the object name and call self.pupper.begin_tracking(object_name)
-            #   Example: if command is "track_person", extract "person" and call self.pupper.begin_tracking("person")
-            #   Use: object_name = command.split("_", 1)[1]
-            # - If command is "stop_tracking", call self.pupper.end_tracking()
-            # - Use await asyncio.sleep(0.5) after each tracking command
-            
-            # TODO: Paste your Lab 6 command mapping implementation below
-            # Implement the mapping from canonical command names (e.g., "move", "turn_left", "bark", etc.) to the appropriate KarelPupper action and its timing.
-            # One complete mapping is shown as an example!
-            
             # TODO: Implement the mapping from canonical command names (e.g., "move", "turn_left", "bark", etc.) to the appropriate KarelPupper action and its timing.
             # One complete mapping is shown as an example!
-            if command in ["start_tracking_person", "track", "person", "start_tracking"]:
-                self.pupper.begin_tracking(command.split("_")[2])
-                await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
-            
-            # elif command in ["stop_tracking"]:
-            #     self.pupper.end_tracking()
-            #     await asyncio.sleep(0.5)
-            #     logger.info(f"✅ Done")
-            #     return True
-            
-            elif command in ["move_backward", "back"]:
-                self.pupper.move_backward()
-                await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
-
-            elif command in ["move_forward", "forward", "forwards", "move"]:
+            if command in ["move_forward", "go", "forward", "forwards"]:
                 self.pupper.move_forward()
-                await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
+                await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
             
-            elif command in ["move_left"]:
-                self.pupper.move_left()
-                await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
+            elif command in ["move_backward", "go back", "backwards"]:
+                self.pupper.move_backward()
+                await asyncio.sleep(0.5)  # Hint: Use await asyncio.sleep(seconds) to pace each action!
             
-            elif command in ["move_right"]:
-                self.pupper.move_right()
-                await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
-
+            
             elif command in ["turn_left", "left"]:
                 self.pupper.turn_left()
                 await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
             
             elif command in ["turn_right", "right"]:
                 self.pupper.turn_right()
                 await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
             
             elif command in ["bark"]:
                 self.pupper.bark()
                 await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
             
             elif command in ["wiggle"]:
                 self.pupper.wiggle()
                 await asyncio.sleep(5.5)
-                logger.info(f"✅ Done")
-                return True
             
             elif command in ["bob"]:
                 self.pupper.bob()
                 await asyncio.sleep(5.5)
-                logger.info(f"✅ Done")
-                return True
             
             elif command in ["dance"]:
                 self.pupper.dance()
                 await asyncio.sleep(12.0)
-                logger.info(f"✅ Done")
-                return True
             
             elif command in ["stop"]:
-                if self.pupper.tracking_enabled:
-                    self.pupper.end_tracking()
                 self.pupper.stop()
                 await asyncio.sleep(0.5)
-                logger.info(f"✅ Done")
-                return True
-
+            
             else:
                 logger.warning(f"⚠️  Unknown command: {command}")
                 return False
             
-            # Hint: Use await asyncio.sleep(seconds) to pace each action!
-            # TODO: Add additional elifs for the other actions that KarelPupper supports,
-            #       calling the correct pupper method, and using an appropriate sleep time after each command.
-            # For example:
-            #   - For "wiggle"/"wag" actions, the total animation can take ~5.5 seconds; use await asyncio.sleep(5.5)
-            #   - For "bob" actions, the action can take ~5.5 seconds; use await asyncio.sleep(5.5)
-            #   - For "dance" actions, the full dance is ~12.0 seconds; use await asyncio.sleep(12.0)
-            #   - For most normal moves and turns, use 0.5 seconds.
-            # See the KarelPupper API for supported commands and their method names.
+            logger.info(f"✅ Done")
+            return True
             
         except Exception as e:
             logger.error(f"❌ Error: {e}")

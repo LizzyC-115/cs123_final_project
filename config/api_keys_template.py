@@ -97,4 +97,3 @@ if __name__ == "__main__":
     print(f"✓ TTS Voice: {TTS_VOICE}")
     print("=== Configuration Test Complete ===")
 
-

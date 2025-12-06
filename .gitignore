@@ -1,47 +1,56 @@
-# macOS
-.DS_Store
-
-# Python
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg
-*.egg-info
-dist/
-build/
-
-# API Keys - NEVER commit these!
+# API Keys and Secrets
 config/api_keys.py
-**/api_keys.py
-*.env
+*.key
+*.secret
 .env
 .env.local
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Audio files
+*.wav
+*.mp3
+*.mp4
+recorded_audio.wav
+test_audio.wav
+
 # Logs
 *.log
-/tmp/
-hailort.log
-ros2_test.log
-hailo_test.log
-tracking_test.log
-foxglove_test.log
+logs/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
+
+# OS
+.DS_Store
+Thumbs.db
 
 # ROS
 install/
-log/
 build/
+log/
 
-# Temporary files
-*.tmp
-*.bak
-*.backup

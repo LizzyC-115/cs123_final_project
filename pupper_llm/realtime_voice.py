@@ -19,7 +19,6 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 from std_msgs.msg import String
-from sensor_msgs.msg import CompressedImage
 import sounddevice as sd
 import numpy as np
 import websockets
@@ -59,15 +58,6 @@ class RealtimeVoiceNode(Node):
             10
         )
         
-        # NEW FOR LAB 7: Camera snapshot subscriber (for vision input to OpenAI)
-        # This receives periodic camera snapshots that get sent to GPT when the user speaks
-        self.camera_snapshot_subscriber = self.create_subscription(
-            CompressedImage,
-            '/camera_snapshot',
-            self.camera_snapshot_callback,
-            10
-        )
-        
         # Audio configuration
         self.sample_rate = 24000  # Realtime API uses 24kHz
         self.channels = 1
@@ -91,154 +81,89 @@ class RealtimeVoiceNode(Node):
         # Text accumulator to see the full model output
         self.current_response_text = ""
         
-        # NEW FOR LAB 7: Latest camera image (for vision context)
-        # These variables store the most recent camera snapshot for sending to GPT
-        self.latest_camera_image_base64 = None  # Base64-encoded JPEG image
-        self.camera_image_pending = False  # Flag indicating a new image is ready to send
-        
-        # Response logging
-        self.response_count = 0
-        
-        # TODO: Write a system prompt for Pupper with vision and tracking capabilities
-        # Your prompt should include:
-        # 1. Critical output format instructions (exact action phrases, one per line)
-        # 2. Movement actions: Moving forward, Going backward, Turning left, Turning right, Moving left, Moving right, Stopping
-        # 3. Fun actions: Wiggling my tail, Bobbing, Dancing, Woof woof
-        # 4. NEW FOR LAB 7 - Tracking actions: Start tracking [object], Stop tracking
-        #    - Support tracking for 80+ COCO objects: person, dog, cat, car, bottle, chair, cup, bird, etc.
-        # 5. NEW FOR LAB 7 - Vision capabilities: Explain that you can see through the camera and describe what you see
-        # 6. Provide concrete examples showing tracking and vision usage
-        # Your prompt should be around 70 lines to cover all capabilities thoroughly.
+        # System prompt - Match command parser
+        # TODO: Write a system prompt string to instruct the LLM how to output Pupper's actions.
+        # Your prompt must explain the *critical output format*, required action phrases, and give concrete examples.
+        # The prompt should be around 50 lines and ensure outputs are line-by-line with the correct phrasing as used by the command parser.
+        # (After filling the prompt, run this file to see the output format and examples. This is a major part of system behavior!)
         self.system_prompt = """
-        You are Pupper — a friendly quadruped robot assistant with **vision and tracking capabilities**.
-        You read natural language instructions and translate them into structured action commands called “tool calls.”
+        You are Pupper — a friendly quadruped robot assistant. You can understand natural language commands and translate them into structured action commands (called 'tool calls'). 
+                            Your job is to:
+                            1. Read the user’s natural language input.
+                            2. Understand their intent.
+                            3. Output the corresponding sequence of Pupper’s action commands in square brackets, e.g. [move], [turn_left], [bark], [wiggle], etc.
 
-        Your job:
-        1) Read the user’s input.
-        2) Understand their intent.
-        3) Output a corresponding sequence of Pupper action commands.
+                            ---
 
-        =====================
-        OUTPUT FORMAT RULES
-        =====================
-        • Output only tool calls — one per line.
-        • No extra text, no explanations.
-        • Each line must contain exactly one action command.
-        • Follow the exact action command names below.
-        • If the user gives multiple commands, list each on its own line in order.
+                            ### Your Capabilities
 
-        =====================
-        SUPPORTED ACTIONS
-        =====================
+                            You can perform the following basic actions:
 
-        --- MOVEMENT ACTIONS ---
-        move_forward
-        move_backward
-        turn_left        # turn 90° (or implied) left in place
-        turn_right       # turn 90° (or implied) right in place
-        move_left        # strafe left
-        move_right       # strafe right
-        stop             # stop all movement, and stop tracking if it is active
+                            - move_forwards — Walk or run forward in the current direction.
+                            - move_backwards — Move backward.
+                            - turn_left — Rotate 90° (or as implied) anticlockwise on the spot.
+                            - turn_right — Rotate 90° (or as implied) clockwise on the spot.
+                            - bark — Bark or make a short playful noise.
+                            - wiggle — Wiggle or dance playfully in place.
+                            - sit — Sit down.
+                            - stand — Stand up from sitting.
+                            - stop — Stop any ongoing movement.
 
-        --- FUN ACTIONS ---
-        wiggle_tail
-        bob
-        dance
-        bark
+                            You may combine multiple actions in sequence if the command requires it.
+                            You should only output a single command to each line.
+                            If there are multiple commands, put the subsequent commands in a new line.
+                            - e.g., "come here and sit" → "move
+                                                           sit"
+                            - e.g., "walk forward, turn left, then bark twice" → "move
+                                                                                  turn_left
+                                                                                  bark
+                                                                                  bark"
+                            ---
 
-        --- POSTURE ---
-        sit
-        stand
+                            ### Interpretation Guidelines
 
-        --- TRACKING ACTIONS (NEW) ---
-        start_tracking_<object-name>
+                            - Be concise and literal in your output. Only output the list of actions, nothing else.
+                            - If a command involves direction (e.g., “turn anticlockwise”, “face left”, “spin right”), map it to [turn_left] or [turn_right].
+                            - If a command involves emotion or expression (e.g., “be happy”, “show excitement”), use [wiggle] or [bark].
+                            - If a command implies multiple steps, output them in order.
+                            - Ignore irrelevant filler words or phrases — only extract the implied actions.
+                            - If a command is unclear but resembles movement or behavior, make your best reasonable guess.
 
-        Pupper supports tracking COCO-style objects including:
-        person, dog, cat, bird, bicycle, car, motorcycle, bus, train, truck, boat,
-        traffic_light, fire_hydrant, stop_sign, parking_meter, bench,
-        bird, elephant, bear, zebra, giraffe,
-        backpack, umbrella, handbag, tie, suitcase,
-        frisbee, skis, snowboard, sports_ball, kite,
-        bottle, cup, wine_glass, bowl, spoon, fork, knife, sandwich, apple, banana,
-        chair, couch, potted_plant, bed, dining_table, tv, laptop, mouse, remote, keyboard,
-        cell_phone, microwave, oven, toaster, sink, refrigerator,
-        book, clock, vase, scissors, teddy_bear, hair_drier, toothbrush,
-        (and more)
+                            ---
 
-        When tracking, commands must specify the object name
-        → Example: start_tracking_person
-        → Example: start_tracking_bird
+                            ### Examples
 
-        =====================
-        VISION CAPABILITIES (NEW)
-        =====================
-        Pupper can see through a camera and can describe what is visible.
-        When the user asks what Pupper sees, reply with:
-        describe_scene
-        (ONE ACTION LINE ONLY)
+                            **User:** "Walk forwards"
+                            **Output:** "move_forward"
 
-        Note: describing the scene should NOT include a paragraph; the action is “describe_scene”.
+                            **User:** "Turn anticlockwise"
+                            **Output:** "turn_left"
 
-        =====================
-        INTERPRETATION RULES
-        =====================
-        • If direction is implied (e.g. “spin left”), map to turn_left or turn_right.
-        • If emotion is implied (e.g. “be happy”), use wiggle_tail, bob, dance, or woof.
-        • If unclear but resembles an action, make your best guess.
-        • Ignore irrelevant filler that does not imply action.
-        • If user requests both vision + movement, output actions in order.
+                            **User:** "Come here and wag your tail"
+                            **Output:** "move
+                                         wiggle"
 
-        =====================
-        EXAMPLES
-        =====================
+                            **User:** "Bark for me Pupper!"
+                            **Output:** "bark"
 
-        User: “Walk forward”
-        → move_forward
+                            **User:** "Do a little dance"
+                            **Output:** "wiggle"
 
-        User: “Back up three steps”
-        → move_backward
+                            **User:** "Come forwards and turn left"
+                            **Output:** "move
+                                         turn_left"
 
-        User: “Turn around to your left and bark”
-        → turn_left
-        → bark
+                            **User:** "Stop walking"
+                            **Output:** "stop"
 
-        User: “Wiggle for me”
-        → wiggle
+                            **User:** "Sit down then stand up"
+                            **Output:** "sit
+                                         stand"
 
-        User: “Sit then stand”
-        → sit
-        → stand
+                            ---
+                            Always respond *only* with the tool calls — no explanations, no text outside the commands.
 
-        User: “Go forward then track the person”
-        → move_forward
-        → start_tracking_person
-
-        User: “Stop”
-        → stop
-        
-        User: “Stop moving”
-        → stop
-        
-        User: “Stop tracking now”
-        → stop
-
-        User: “Look around — what do you see?”
-        → describe_scene
-
-        User: “Walk forward, track the bottle, then bark twice”
-        → move_forward
-        → start_tracking_bottle
-        → bark
-        → bark
-
-        User: “Move right and dance”
-        → move_right
-        → dance
-
-        =====================
-        END OF PROMPT
-        =====================
-        """  # <-- Set your prompt here as a multi-line string
+                            You are Pupper — a playful, responsive quadruped robot ready to act!"""  # <-- Set your prompt here as a multi-line string.
         
         logger.info('Realtime Voice Node initialized')
     
@@ -251,27 +176,6 @@ class RealtimeVoiceNode(Node):
         elif command == 'unmute':
             self.microphone_muted = False
             logger.info("🎤 Microphone UNMUTED")
-    
-    def camera_snapshot_callback(self, msg):
-        """
-        Store latest camera image for sending to OpenAI.
-        
-        NEW FOR LAB 7: This callback receives camera snapshots and prepares them for vision input.
-        
-        TODO: Implement camera snapshot processing
-        - The msg parameter is a CompressedImage message containing JPEG image data in msg.data
-        - Convert the JPEG data to base64 encoding using: base64.b64encode(msg.data).decode('utf-8')
-        - Store the base64 string in self.latest_camera_image_base64
-        - Set self.camera_image_pending = True to indicate a new image is ready to send
-        - Wrap in try/except and log errors with logger.error() if conversion fails
-        """
-        
-        try:
-            self.latest_camera_image_base64 = base64.b64encode(msg.data).decode('utf-8')
-            self.camera_image_pending = True
-            logger.info("Camera snapshot received and stored")
-        except Exception as e:
-            logger.error(f"Error processing camera snapshot: {e}")
     
     async def _delayed_unmute(self):
         """Unmute microphone after 3 second delay to prevent echo."""
@@ -297,67 +201,9 @@ class RealtimeVoiceNode(Node):
         except Exception as e:
             logger.error(f"Error clearing server buffer: {e}")
     
-    async def send_camera_image_if_available(self):
-        """
-        Send camera image to OpenAI when user starts speaking.
-        
-        NEW FOR LAB 7: This sends the camera view to GPT so it can "see" what Pupper sees.
-        The image is sent as a multimodal message BEFORE the audio transcription completes,
-        providing visual context for the user's voice command.
-        
-        OpenAI Realtime API Message Format for Images:
-        {
-            "type": "conversation.item.create",
-            "item": {
-                "type": "message",
-                "role": "user",
-                "content": [
-                    {"type": "input_text", "text": "[Description]"},
-                    {"type": "input_image", "image_url": "data:image/jpeg;base64,BASE64_STRING"}
-                ]
-            }
-        }
-        
-        TODO: Implement image sending logic
-        - Check if an image is available: if not self.latest_camera_image_base64 or not self.camera_image_pending, return early
-        - Create an image_message dictionary following the format above:
-          * Set type to "conversation.item.create"
-          * Set item.type to "message" and item.role to "user"
-          * Set item.content to a list with two elements:
-            1. A text element: {"type": "input_text", "text": "[Current camera view]"}
-            2. An image element: {"type": "input_image", "image_url": f"data:image/jpeg;base64,{self.latest_camera_image_base64}"}
-        - Send the message: await self.websocket.send(json.dumps(image_message))
-        - Set self.camera_image_pending = False to prevent sending the same image multiple times
-        - Wrap in try/except to catch and log any errors
-        """
-
-        if not self.latest_camera_image_base64 or not self.camera_image_pending:
-            logger.info("No image is available. Returning now.")
-            return
-        
-        image_message = {
-            "type": "conversation.item.create",
-            "item": {
-                "type": "message",
-                "role": "user",
-                "content": [
-                    {"type": "input_text", "text": "[Current camera view]"},
-                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{self.latest_camera_image_base64}"}
-                ]
-            }
-        }
-        try:
-            await self.websocket.send(json.dumps(image_message))
-            self.camera_image_pending = False
-            logger.info("📸 Sent camera image to OpenAI")
-        except Exception as e:
-            logger.error(f"Error sending camera image: {e}")
-    
     async def connect_realtime_api(self):
         """Connect to OpenAI Realtime API via WebSocket."""
-        # NEW FOR LAB 7: Using "gpt-realtime" model which supports multimodal input (audio + images)
-        # This is different from Lab 6 which used "gpt-4o-realtime-preview-2024-10-01" (audio only)
-        url = "wss://api.openai.com/v1/realtime?model=gpt-realtime"
+        url = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "OpenAI-Beta": "realtime=v1"
@@ -506,7 +352,9 @@ class RealtimeVoiceNode(Node):
                 msg = String()
                 msg.data = transcription
                 self.transcription_publisher.publish(msg)
-        
+
+        # This part is implemented for you to compensate for the lack of clarity in this lab's first iteration.
+        # In the future, students should implement this themselves to understand the conversation flow.
         elif event_type == "conversation.item.created":
             # Item created in conversation - check if it's user input
             item = event.get("item", {})
@@ -543,8 +391,6 @@ class RealtimeVoiceNode(Node):
             delta = event.get("delta", "")
             if delta:
                 self.current_response_text += delta
-                # Log streaming response in real-time
-                logger.debug(f"📝 Streaming: {delta}")
         
         elif event_type == "response.audio.delta":
             # Audio response chunk - mute mic
@@ -576,9 +422,7 @@ class RealtimeVoiceNode(Node):
         elif event_type == "response.done":
             # Response completed - publish text
             if self.current_response_text.strip():
-                self.response_count += 1
-                logger.info(f"🤖 Assistant (Response #{self.response_count}): {self.current_response_text}")
-                logger.info(f"📊 Response Stats: Length={len(self.current_response_text)} chars, Lines={len(self.current_response_text.split(chr(10)))}")
+                logger.info(f"🤖 Assistant: {self.current_response_text}")
                 
                 # Publish response text
                 msg = String()
@@ -593,13 +437,7 @@ class RealtimeVoiceNode(Node):
                 self.agent_speaking = False
         
         elif event_type == "input_audio_buffer.speech_started":
-            # User started speaking - send camera image NOW before response generation
-            logger.info("🎤 User speech detected")
-            # NEW FOR LAB 7: Send camera snapshot so GPT can see what Pupper sees
-            # This is called automatically when speech is detected, before the audio is transcribed
-            await self.send_camera_image_if_available()
-            
-            # Handle interruption if agent was speaking
+            # User started speaking - handle interruption
             if self.agent_speaking:
                 logger.info("⚠️  User interrupted")
                 self.agent_speaking = False
@@ -613,7 +451,6 @@ class RealtimeVoiceNode(Node):
         elif event_type == "response.created":
             # New response starting - clear buffer IMMEDIATELY before audio even arrives
             self.current_response_text = ""
-            logger.info("🔄 Response generation started...")
             
             # Preemptively clear server buffer and local queue
             asyncio.create_task(self._clear_server_audio_buffer())
