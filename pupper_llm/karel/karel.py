@@ -183,7 +183,7 @@ class KarelPupper:
         move_cmd.linear.y = 1.0
 
         start_time = time.time()
-        while time.time() - start_time < 2.0:  # Move for 2 seconds
+        while time.time() - start_time < 1.0:  # Move for 2 seconds
             self.publisher.publish(move_cmd)
             rclpy.spin_once(self.node, timeout_sec=0.01)
         
@@ -202,7 +202,7 @@ class KarelPupper:
         move_cmd.linear.y = -1.0
 
         start_time = time.time()
-        while time.time() - start_time < 2.0:  # Move for 2 seconds
+        while time.time() - start_time < 1.0:  # Move for 2 seconds
             self.publisher.publish(move_cmd)
             rclpy.spin_once(self.node, timeout_sec=0.01)
         
