@@ -21,7 +21,7 @@ from rclpy.executors import SingleThreadedExecutor
 from std_msgs.msg import String
 import sys
 sys.path.insert(0, 'pupper_llm/karel')
-import karel
+from pupper_llm.karel import karel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -248,10 +248,7 @@ async def main_async(args=None):
     
     try:
         logger.info("🚀 Sensor Commander started")
-        if test_mode:
-            logger.info("🧪 Running in TEST MODE (no serial required)")
-        else:
-            logger.info("📡 Reading from serial port")
+        logger.info("📡 Reading from serial port")
         
         # Create tasks
         ros_task = asyncio.create_task(spin_ros_async(executor))
