@@ -66,33 +66,32 @@ class SensorCommanderNode(Node):
 
     def parse_data(self, data: str) -> str:
         """Parse serial data and return a command string."""
-        # Use for 
-        return data
+        # return data
 
         # Use for left, right, backwards, and forwards
-        # data_lower = data.lower().strip()
+        data_lower = data.lower().strip()
         
-        # # Strip brackets if present (e.g., "[TURN_LEFT]" -> "turn_left")
-        # if data_lower.startswith('[') and data_lower.endswith(']'):
-        #     data_lower = data_lower[1:-1]
+        # Strip brackets if present (e.g., "[TURN_LEFT]" -> "turn_left")
+        if data_lower.startswith('[') and data_lower.endswith(']'):
+            data_lower = data_lower[1:-1]
         
-        # # Map to commands
-        # if 'turn_left' in data_lower or data_lower == 'l':
-        #     return 'turn_left'
-        # elif 'turn_right' in data_lower or data_lower == 'r':
-        #     return 'turn_right'
-        # elif 'left' in data_lower:
-        #     return 'move_left'
-        # elif 'right' in data_lower:
-        #     return 'move_right'
-        # elif 'forward' in data_lower:
-        #     return 'move_forward'
-        # elif 'backward' in data_lower or 'back' in data_lower:
-        #     return 'move_backward'
-        # elif 'stop' in data_lower:
-        #     return 'stop'
-        # else:
-        #     return None
+        # Map to commands
+        if 'turn_left' in data_lower or data_lower == 'l':
+            return 'turn_left'
+        elif 'turn_right' in data_lower or data_lower == 'r':
+            return 'turn_right'
+        elif 'left' in data_lower:
+            return 'move_left'
+        elif 'right' in data_lower:
+            return 'move_right'
+        elif 'forward' in data_lower:
+            return 'move_forward'
+        elif 'backward' in data_lower or 'back' in data_lower:
+            return 'move_backward'
+        elif 'stop' in data_lower:
+            return 'stop'
+        else:
+            return None
 
     async def read_serial_loop(self):
         """Async loop to read serial data and queue commands."""
@@ -154,33 +153,33 @@ class SensorCommanderNode(Node):
         try:
             logger.info(f"⚙️  Executing: {command}")
 
-            coord = [float(i) for i in command.split(',')]
-            self.pupper.move_coordinate(coord)
+            # coord = [float(i) for i in command.split(',')]
+            # self.pupper.move_coordinate(coord)
             
-            # if command in ['move_forward', 'forward']:
-            #     self.pupper.move_forward()
-            #     await asyncio.sleep(0.5)
-            # elif command in ['move_backward', 'backward', 'back']:
-            #     self.pupper.move_backward()
-            #     await asyncio.sleep(0.5)
-            # elif command in ['move_left', 'left', 'strafe_left']:
-            #     self.pupper.move_left()
-            #     await asyncio.sleep(0.5)
-            # elif command in ['move_right', 'right', 'strafe_right']:
-            #     self.pupper.move_right()
-            #     await asyncio.sleep(0.5)
-            # elif command == 'turn_left':
-            #     self.pupper.turn_left()
-            #     await asyncio.sleep(0.5)
-            # elif command == 'turn_right':
-            #     self.pupper.turn_right()
-            #     await asyncio.sleep(0.5)
-            # elif command == 'stop':
-            #     self.pupper.stop()
-            #     await asyncio.sleep(0.1)
-            # else:
-            #     logger.warning(f"⚠️  Unknown command: {command}")
-            #     return False
+            if command in ['move_forward', 'forward']:
+                self.pupper.move_forward()
+                await asyncio.sleep(0.5)
+            elif command in ['move_backward', 'backward', 'back']:
+                self.pupper.move_backward()
+                await asyncio.sleep(0.5)
+            elif command in ['move_left', 'left', 'strafe_left']:
+                self.pupper.move_left()
+                await asyncio.sleep(0.5)
+            elif command in ['move_right', 'right', 'strafe_right']:
+                self.pupper.move_right()
+                await asyncio.sleep(0.5)
+            elif command == 'turn_left':
+                self.pupper.turn_left()
+                await asyncio.sleep(0.5)
+            elif command == 'turn_right':
+                self.pupper.turn_right()
+                await asyncio.sleep(0.5)
+            elif command == 'stop':
+                self.pupper.stop()
+                await asyncio.sleep(0.1)
+            else:
+                logger.warning(f"⚠️  Unknown command: {command}")
+                return False
             
             logger.info(f"✅ Done: {command}")
             return True
