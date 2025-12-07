@@ -128,7 +128,7 @@ class KarelPupper:
             self.publisher.publish(move_cmd)
             rclpy.spin_once(self.node, timeout_sec=0.01)
 
-        self.node.get_logger().info("Move forward...")
+        self.node.get_logger().info("Move with coordinate" + str(coord))
         self.stop()
 
     def move_forward(self):
