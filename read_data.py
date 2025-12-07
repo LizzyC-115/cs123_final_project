@@ -80,14 +80,25 @@ class SensorCommanderNode(Node):
             return 'turn_left'
         elif 'turn_right' in data_lower or data_lower == 'r':
             return 'turn_right'
-        elif 'left' in data_lower:
+        elif 'move_left' in data_lower:
             return 'move_left'
-        elif 'right' in data_lower:
+        elif 'move_right' in data_lower:
             return 'move_right'
-        elif 'forward' in data_lower:
+        elif 'move_forwards' in data_lower:
             return 'move_forward'
-        elif 'backward' in data_lower or 'back' in data_lower:
+        elif 'move_backwards' in data_lower or 'back' in data_lower:
             return 'move_backward'
+
+        # New commands for two load cells
+        elif 'move_forward_left' in data_lower:
+            return 'move_diagonal_FL'
+        elif 'move_forward_right' in data_lower:
+            return 'move_diagonal_FR'
+        elif 'move_backward_left' in data_lower:
+            return 'move_diagonal_BL'
+        elif 'move_backward_right' in data_lower:
+            return 'move_diagonal_BR'
+        
         elif 'stop' in data_lower:
             return 'stop'
         else:
@@ -171,9 +182,22 @@ class SensorCommanderNode(Node):
             elif command == 'turn_left':
                 self.pupper.turn_left()
                 await asyncio.sleep(0.5)
-            elif command == 'turn_right':
-                self.pupper.turn_right()
+            
+            # New commands or two load cells
+            elif command == 'move_diagonal_FL':
+                self.pupper.move_diagonal_FL()
                 await asyncio.sleep(0.5)
+            elif command == 'move_diagonal_FR':
+                self.pupper.move_diagonal_FR()
+                await asyncio.sleep(0.5)
+            elif command == 'move_diagonal_BL':
+                self.pupper.move_diagonal_BL()
+                await asyncio.sleep(0.5)
+            elif command == 'move_diagonal_BR':
+                self.pupper.move_diagonal_BR()
+                await asyncio.sleep(0.5)
+
+
             elif command == 'stop':
                 self.pupper.stop()
                 await asyncio.sleep(0.1)

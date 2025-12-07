@@ -113,22 +113,78 @@ class KarelPupper:
 
         self.node.get_logger().info('Wiggle!')
 
-    def move_coordinate(self, coord):
-        """
-        coord[0] represents x direction (positive moves right, negative moves left)
-        coord[1] represents y direction (positive moves forward, negative moves backward)
-        """
+    # def move_coordinate(self, coord):
+    #     """
+    #     coord[0] represents x direction (positive moves right, negative moves left)
+    #     coord[1] represents y direction (positive moves forward, negative moves backward)
+    #     """
+    #     move_cmd = Twist()
+    #     move_cmd.linear.x = coord[1]
+    #     move_cmd.angular.z = 0.0
+    #     move_cmd.linear.y = -1 * coord[0]
+
+    #     start_time = time.time()
+    #     while time.time() - start_time < 0.5:  # Move for 2 seconds
+    #         self.publisher.publish(move_cmd)
+    #         rclpy.spin_once(self.node, timeout_sec=0.01)
+
+    #     self.node.get_logger().info("Move with coordinate" + str(coord))
+    #     self.stop()
+
+    def move_diagonal_FR(self):
         move_cmd = Twist()
-        move_cmd.linear.x = coord[1]
+        move_cmd.linear.x = 1.0
         move_cmd.angular.z = 0.0
-        move_cmd.linear.y = -1 * coord[0]
+        move_cmd.linear.y = -1.0
 
         start_time = time.time()
-        while time.time() - start_time < 0.5:  # Move for 2 seconds
+        while time.time() - start_time < 1.0:  # Move for 2 seconds
             self.publisher.publish(move_cmd)
             rclpy.spin_once(self.node, timeout_sec=0.01)
 
-        self.node.get_logger().info("Move with coordinate" + str(coord))
+        self.node.get_logger().info("Move diagonally forward and to the right...")
+        self.stop()
+    
+    def move_diagonal_FL(self):
+        move_cmd = Twist()
+        move_cmd.linear.x = 1.0
+        move_cmd.angular.z = 0.0
+        move_cmd.linear.y = 1.0
+
+        start_time = time.time()
+        while time.time() - start_time < 1.0:  # Move for 2 seconds
+            self.publisher.publish(move_cmd)
+            rclpy.spin_once(self.node, timeout_sec=0.01)
+
+        self.node.get_logger().info("Move diagonally forward and to the left...")
+        self.stop()
+
+    def move_diagonal_BL(self):
+        move_cmd = Twist()
+        move_cmd.linear.x = -1.0
+        move_cmd.angular.z = 0.0
+        move_cmd.linear.y = 1.0
+
+        start_time = time.time()
+        while time.time() - start_time < 1.0:  # Move for 2 seconds
+            self.publisher.publish(move_cmd)
+            rclpy.spin_once(self.node, timeout_sec=0.01)
+
+        self.node.get_logger().info("Move diagonally backwards and to the left...")
+        self.stop()
+    
+    def move_diagonal_BR(self):
+        move_cmd = Twist()
+        move_cmd.linear.x = -1.0
+        move_cmd.angular.z = 0.0
+        move_cmd.linear.y = -1.0
+
+        start_time = time.time()
+        while time.time() - start_time < 1.0:  # Move for 2 seconds
+            self.publisher.publish(move_cmd)
+            rclpy.spin_once(self.node, timeout_sec=0.01)
+
+        self.node.get_logger().info("Move diagonally backwards and to the right...")
         self.stop()
 
     def move_forward(self):
@@ -144,7 +200,7 @@ class KarelPupper:
         move_cmd.linear.y = 0.0
 
         start_time = time.time()
-        while time.time() - start_time < 2.0:  # Move for 2 seconds
+        while time.time() - start_time < 1.0:  # Move for 2 seconds
             self.publisher.publish(move_cmd)
             rclpy.spin_once(self.node, timeout_sec=0.01)
         
@@ -164,7 +220,7 @@ class KarelPupper:
         move_cmd.linear.y = 0.0
 
         start_time = time.time()
-        while time.time() - start_time < 2.0:  # Move for 2 seconds
+        while time.time() - start_time < 1.0:  # Move for 2 seconds
             self.publisher.publish(move_cmd)
             rclpy.spin_once(self.node, timeout_sec=0.01)
         
