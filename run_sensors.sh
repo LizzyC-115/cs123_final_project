@@ -20,7 +20,7 @@ echo ""
 
 # Launch ROS2 control system
 echo "1. Launching ROS2 control system..."
-ros2 launch launch/launch.py > /tmp/ros2_launch.log 2>&1 &
+ros2 launch launch/launch_no_walk.py > /tmp/ros2_launch.log 2>&1 &
 ROS2_PID=$!
 
 # Wait for ROS2 to initialize

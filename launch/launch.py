@@ -110,11 +110,11 @@ def generate_launch_description():
     )
 
     # Movement subscriber - receives commands and controls Pupper movement
-    movement_subscriber = ExecuteProcess(
-        cmd=['python3', os.path.join(launch_file_dir, 'movement_subscriber.py')],
-        name='movement_subscriber',
-        output='both',
-    )
+    # movement_subscriber = ExecuteProcess(
+    # cmd=['python3', os.path.join(launch_file_dir, 'movement_subscriber.py')],
+    #     name='movement_subscriber',
+    #     output='both',
+    # )
 
     nodes = [
         robot_state_publisher,
@@ -125,7 +125,7 @@ def generate_launch_description():
         joy_node,
         teleop_twist_joy_node,
         load_cell_publisher,
-        movement_subscriber
+        # movement_subscriber
     ]
 
     # nodes = [
