@@ -66,8 +66,10 @@ class SensorCommanderNode(Node):
 
     def parse_data(self, data: str) -> str:
         """Parse serial data and return a command string."""
+        # Use for 
         return data
 
+        # Use for left, right, backwards, and forwards
         # data_lower = data.lower().strip()
         
         # # Strip brackets if present (e.g., "[TURN_LEFT]" -> "turn_left")

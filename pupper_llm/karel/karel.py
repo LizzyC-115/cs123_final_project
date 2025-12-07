@@ -124,7 +124,7 @@ class KarelPupper:
         move_cmd.linear.y = -1 * coord[0]
 
         start_time = time.time()
-        while time.time() - start_time < 2.0:  # Move for 2 seconds
+        while time.time() - start_time < 0.5:  # Move for 2 seconds
             self.publisher.publish(move_cmd)
             rclpy.spin_once(self.node, timeout_sec=0.01)
 
