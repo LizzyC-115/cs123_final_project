@@ -113,6 +113,24 @@ class KarelPupper:
 
         self.node.get_logger().info('Wiggle!')
 
+    def move_coordinate(self, coord):
+        """
+        coord[0] represents x direction (positive moves right, negative moves left)
+        coord[1] represents y direction (positive moves forward, negative moves backward)
+        """
+        move_cmd = Twist()
+        move_cmd.linear.x = coord[1]
+        move_cmd.angular.z = 0.0
+        move_cmd.linear.y = -1 * coord[0]
+
+        start_time = time.time()
+        while time.time() - start_time < 2.0:  # Move for 2 seconds
+            self.publisher.publish(move_cmd)
+            rclpy.spin_once(self.node, timeout_sec=0.01)
+
+        self.node.get_logger().info("Move forward...")
+        self.stop()
+
     def move_forward(self):
         """
         TODO: Implement moving Pupper forward.
