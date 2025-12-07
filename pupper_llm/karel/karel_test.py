@@ -6,9 +6,9 @@ import karel
 def main():
     pupper = karel.KarelPupper()
     pupper.move_forward()
-    pupper.move_coordinate((-1, 0))  # left
-    pupper.move_coordinate((1, 0))  # right
-    pupper.move_coordinate((1, 1))  # diagonal to right
+    pupper.move_coordinate((-1.0, 0.0))  # left
+    pupper.move_coordinate((1.0, 0.0))  # right
+    pupper.move_coordinate((1.0, 1.0))  # diagonal to right
     # pupper.move_forward()
     # pupper.wiggle()
     # pupper.move_backward()
