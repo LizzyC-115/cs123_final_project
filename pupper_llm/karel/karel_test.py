@@ -5,6 +5,7 @@ import karel
 
 def main():
     pupper = karel.KarelPupper()
+    pupper.move_forward()
     pupper.move_coordinate((-1, 0))  # left
     pupper.move_coordinate((1, 0))  # right
     pupper.move_coordinate((1, 1))  # diagonal to right
