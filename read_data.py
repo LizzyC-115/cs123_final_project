@@ -51,7 +51,7 @@ class SensorCommanderNode(Node):
         
         # Command queue with timestamps
         self.command_queue = asyncio.Queue()
-        self.command_timeout = 20.0  # Discard commands older than 20 seconds
+        self.command_timeout = 1.0 # Discard commands older than 20 seconds
         
         logger.info(f'SensorCommander initialized (test_mode={test_mode})')
 
