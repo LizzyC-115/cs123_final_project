@@ -1,0 +1,1 @@
+This file runs on the Raspberry Pi Pico W to read the sensors. 
