@@ -32,6 +32,25 @@ To run testing on local env, ensure ROS2 is installed. Follow offical documentat
 For this project, we modified the existing code on robot. We added another monorepo and redeployed lab_5 with a new trained policy.
 
 
+# To run sensor implementation
+1) Download this repo and ensure ROS2 is installed on the machine you will be running the program on
+2) Install the Pico W code on the Raspberry Pi Pico W
+3) Run
+    ```
+    bash run_sensors.sh
+    ```
+
+# To run RL implementation
+1) Run in a separate terminal
+   ```
+   python deploy.py
+   ```
+2) Run in a separate terminal
+   ```
+   ros2 control switch_controllers --activate neural_controller
+   ```
+
+
 
 
 
