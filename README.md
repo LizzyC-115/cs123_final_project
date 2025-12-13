@@ -2,6 +2,7 @@
 We are using two implementations to "walk" Pupper with a leash. For the sensor implementation, we are using a custom ROS2 publisher and subscriber node to publish sensor readings from a Raspberry Pi Pico W and modifications to lab_6. The Raspberry Pi 4 from Pupper will be subscribed to this node. For the RL implemenation, we are will be adding to lab_5.
 
 Slides: https://docs.google.com/presentation/d/1g2nzQHmxPXcY9-3Gn_u5153e9yrS_icvtOC-Yueb2_s/edit?usp=drive_link
+
 Videos: https://drive.google.com/drive/folders/1_IHZBOSZvxqxb4rCNMoKzECx82MBmdct?usp=drive_link
 
 # Sensor Implementation
